@@ -19,17 +19,17 @@ export function createApp() {
     let filtered = places;
     if (from) {
       const fromDate = new Date(from);
-      filtered = filtered.filter((place) => new Date(place.createdAt) >= fromDate);
+      filtered = filtered.filter((place) => getPlaceDate(place) >= fromDate);
     }
     if (to) {
       const toDate = new Date(to);
-      filtered = filtered.filter((place) => new Date(place.createdAt) <= toDate);
+      filtered = filtered.filter((place) => getPlaceDate(place) <= toDate);
     }
     res.json(filtered);
   });
 
   app.post('/api/places', async (req, res) => {
-    const { lat, lng, title, note, source } = req.body;
+    const { lat, lng, title, note, source, visitDate, color } = req.body;
     if (lat === undefined || lng === undefined) {
       return res.status(400).json({ message: 'lat and lng are required' });
     }
@@ -44,13 +44,30 @@ export function createApp() {
       lat: Number(lat),
       lng: Number(lng),
       createdAt: new Date().toISOString(),
+      visitDate: visitDate || new Date().toISOString().slice(0, 10),
       title: title || '',
       note: note || '',
+      color: color || '#38bdf8',
       source: source === 'search' ? 'search' : 'click'
     };
     places.push(newPlace);
     await writePlaces(places);
     res.status(201).json(newPlace);
+  });
+
+  app.put('/api/places/:id', async (req, res) => {
+    const { title, note, visitDate, color } = req.body;
+    const places = await readPlaces();
+    const target = places.find((place) => place.id === req.params.id);
+    if (!target) {
+      return res.status(404).json({ message: 'Not found' });
+    }
+    target.title = title ?? target.title;
+    target.note = note ?? target.note;
+    target.visitDate = visitDate || target.visitDate || new Date().toISOString().slice(0, 10);
+    target.color = color || target.color || '#38bdf8';
+    await writePlaces(places);
+    res.json(target);
   });
 
   app.delete('/api/places/:id', async (req, res) => {
@@ -65,4 +82,11 @@ export function createApp() {
   });
 
   return app;
+}
+
+function getPlaceDate(place) {
+  if (place.visitDate) {
+    return new Date(`${place.visitDate}T00:00:00Z`);
+  }
+  return new Date(place.createdAt);
 }

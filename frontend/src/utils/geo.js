@@ -8,32 +8,6 @@ export async function loadUkraineGeojson() {
   return response.json();
 }
 
-export function buildUkraineMask(ukraineFeature) {
-  const world = [
-    [
-      [-180, -85],
-      [180, -85],
-      [180, 85],
-      [-180, 85],
-      [-180, -85]
-    ]
-  ];
-  const hole = [...ukraineFeature.geometry.coordinates[0]].reverse();
-  return {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        properties: { name: 'mask' },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [world[0], hole]
-        }
-      }
-    ]
-  };
-}
-
 export function getBounds(feature) {
   const coords = feature.geometry.coordinates[0];
   const lons = coords.map((coord) => coord[0]);
@@ -53,7 +27,14 @@ export function toGeoJson(points) {
     type: 'FeatureCollection',
     features: points.map((place) => ({
       type: 'Feature',
-      properties: { id: place.id, title: place.title, count: 1 },
+      properties: {
+        id: place.id,
+        title: place.title,
+        count: 1,
+        color: place.color,
+        visitDate: place.visitDate,
+        createdAt: place.createdAt
+      },
       geometry: {
         type: 'Point',
         coordinates: [place.lng, place.lat]

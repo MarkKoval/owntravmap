@@ -156,6 +156,12 @@ body {
   gap: 10px;
 }
 
+.timeline-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
 .timeline-day {
   font-weight: 600;
   font-size: 13px;
@@ -164,7 +170,7 @@ body {
 }
 
 .timeline-item {
-  width: 100%;
+  flex: 1;
   border: 1px solid transparent;
   border-radius: 16px;
   padding: 10px;
@@ -184,6 +190,30 @@ body {
 .timeline-item span {
   font-size: 12px;
   color: var(--muted);
+}
+
+.timeline-edit {
+  border-radius: 14px;
+  padding: 0 12px;
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  white-space: nowrap;
+}
+
+.map-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #0b0f16;
+  font-size: 12px;
+}
+
+.maplibregl-popup-content {
+  background: rgba(226, 232, 240, 0.95);
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.2);
 }
 
 .sheet {
@@ -227,6 +257,11 @@ body {
 
 .sheet textarea {
   min-height: 80px;
+}
+
+.sheet input[type='color'] {
+  padding: 0;
+  height: 42px;
 }
 
 .sheet-actions {

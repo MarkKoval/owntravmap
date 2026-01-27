@@ -6,7 +6,7 @@ import BottomSheet from './components/BottomSheet.jsx';
 import Timeline from './components/Timeline.jsx';
 import DateFilter from './components/DateFilter.jsx';
 import MotionToggle from './components/MotionToggle.jsx';
-import { fetchPlaces, createPlace } from './utils/api.js';
+import { fetchPlaces, createPlace, updatePlace } from './utils/api.js';
 import { debounce } from './utils/throttle.js';
 import { loadUkraineGeojson, isInUkraine } from './utils/geo.js';
 import { motionTokens } from './utils/motion.js';
@@ -14,9 +14,10 @@ import { motionTokens } from './utils/motion.js';
 export default function App() {
   const [places, setPlaces] = useState([]);
   const [tempPlace, setTempPlace] = useState(null);
+  const [editingPlace, setEditingPlace] = useState(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
-  const [heatRadius, setHeatRadius] = useState(48);
-  const [heatIntensity, setHeatIntensity] = useState(1.1);
+  const heatRadius = 48;
+  const heatIntensity = 1.1;
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [ukraineFeature, setUkraineFeature] = useState(null);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -58,18 +59,31 @@ export default function App() {
         setErrorMessage('That point is outside Ukraine.');
         return;
       }
-      setTempPlace({ lng: lngLat.lng, lat: lngLat.lat, title: '', note: '', source: 'click' });
+      setTempPlace({
+        lng: lngLat.lng,
+        lat: lngLat.lat,
+        title: '',
+        note: '',
+        source: 'click',
+        visitDate: new Date().toISOString().split('T')[0],
+        color: '#38bdf8'
+      });
+      setEditingPlace(null);
     },
     [ukraineFeature]
   );
 
   const handleConfirm = async (payload) => {
     try {
-      const created = await createPlace(payload);
-      setPlaces((prev) => [created, ...prev]);
-      setTempPlace(null);
-      setHeatIntensity((value) => value + 0.4);
-      setTimeout(() => setHeatIntensity((value) => Math.max(1.1, value - 0.4)), 480);
+      if (editingPlace) {
+        const updated = await updatePlace(editingPlace.id, payload);
+        setPlaces((prev) => prev.map((place) => (place.id === updated.id ? updated : place)));
+        setEditingPlace(null);
+      } else {
+        const created = await createPlace(payload);
+        setPlaces((prev) => [created, ...prev]);
+        setTempPlace(null);
+      }
     } catch (error) {
       setErrorMessage(error.message || 'Failed to save place');
     }
@@ -81,9 +95,12 @@ export default function App() {
       lat: result.lat,
       title: result.label,
       note: '',
-      source: 'search'
+      source: 'search',
+      visitDate: new Date().toISOString().split('T')[0],
+      color: '#38bdf8'
     };
     setTempPlace(next);
+    setEditingPlace(null);
     mapControls.current.flyTo?.({ center: [result.lng, result.lat], zoom: 9 });
   };
 
@@ -96,6 +113,11 @@ export default function App() {
     if (!target) return;
     setSelectedPlaceId(placeId);
     mapControls.current.flyTo?.({ center: [target.lng, target.lat], zoom: 9 });
+  };
+
+  const handleEditPlace = (place) => {
+    setEditingPlace(place);
+    setTempPlace(null);
   };
 
   return (
@@ -117,29 +139,6 @@ export default function App() {
           ukraineFeature={ukraineFeature}
           reduceMotion={reduceMotion}
         />
-        <div className="controls">
-          <label>
-            Heat radius
-            <input
-              type="range"
-              min="20"
-              max="80"
-              value={heatRadius}
-              onChange={(event) => setHeatRadius(Number(event.target.value))}
-            />
-          </label>
-          <label>
-            Intensity
-            <input
-              type="range"
-              min="0.5"
-              max="2"
-              step="0.1"
-              value={heatIntensity}
-              onChange={(event) => setHeatIntensity(Number(event.target.value))}
-            />
-          </label>
-        </div>
       </div>
 
       <motion.aside
@@ -157,13 +156,18 @@ export default function App() {
           places={places}
           selectedPlaceId={selectedPlaceId}
           onSelect={handleTimelineSelect}
+          onEdit={handleEditPlace}
         />
         <MotionToggle reduceMotion={reduceMotion} onChange={setReduceMotion} />
       </motion.aside>
 
       <BottomSheet
-        place={tempPlace}
-        onCancel={() => setTempPlace(null)}
+        place={editingPlace || tempPlace}
+        mode={editingPlace ? 'edit' : 'create'}
+        onCancel={() => {
+          setTempPlace(null);
+          setEditingPlace(null);
+        }}
         onConfirm={handleConfirm}
         reduceMotion={reduceMotion}
       />
