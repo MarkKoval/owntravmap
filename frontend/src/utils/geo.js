@@ -32,7 +32,9 @@ export function toGeoJson(points) {
         title: place.title,
         count: 1,
         color: place.color,
+        category: place.category,
         visitDate: place.visitDate,
+        photos: place.photos,
         createdAt: place.createdAt
       },
       geometry: {

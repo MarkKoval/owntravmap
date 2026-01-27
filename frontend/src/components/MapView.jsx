@@ -4,8 +4,7 @@ import { motionTokens } from '../utils/motion.js';
 import { getBounds, loadUkraineGeojson, toGeoJson } from '../utils/geo.js';
 import { formatVisitDate } from '../utils/date.js';
 
-const SATELLITE_URL = 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-const LABELS_URL = 'https://basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png';
+const SATELLITE_URL = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
 
 export default function MapView({
   places,
@@ -15,6 +14,7 @@ export default function MapView({
   heatIntensity,
   onMapReady,
   onSelectPlace,
+  onOblastCenterClick,
   selectedPlaceId,
   reduceMotion
 }) {
@@ -27,6 +27,7 @@ export default function MapView({
   const onSelectPlaceRef = useRef(onSelectPlace);
   const onMapReadyRef = useRef(onMapReady);
   const reduceMotionRef = useRef(reduceMotion);
+  const onOblastCenterClickRef = useRef(onOblastCenterClick);
   const hoverPopupRef = useRef(null);
 
   useEffect(() => {
@@ -34,7 +35,8 @@ export default function MapView({
     onSelectPlaceRef.current = onSelectPlace;
     onMapReadyRef.current = onMapReady;
     reduceMotionRef.current = reduceMotion;
-  }, [onMapClick, onSelectPlace, onMapReady, reduceMotion]);
+    onOblastCenterClickRef.current = onOblastCenterClick;
+  }, [onMapClick, onSelectPlace, onMapReady, reduceMotion, onOblastCenterClick]);
 
   useEffect(() => {
     let isMounted = true;
@@ -61,13 +63,7 @@ export default function MapView({
             type: 'raster',
             tiles: [SATELLITE_URL],
             tileSize: 256,
-            attribution: 'Tiles © Esri'
-          },
-          labels: {
-            type: 'raster',
-            tiles: [LABELS_URL],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors, © CARTO'
+            attribution: 'Map data © Google'
           }
         },
         layers: [
@@ -75,11 +71,6 @@ export default function MapView({
             id: 'satellite',
             type: 'raster',
             source: 'satellite'
-          },
-          {
-            id: 'labels',
-            type: 'raster',
-            source: 'labels'
           }
         ]
       },
@@ -108,6 +99,20 @@ export default function MapView({
         data: ukraineFeature
       });
       map.addLayer({
+        id: 'ukraine-border-glow',
+        type: 'line',
+        source: 'ukraine-border',
+        paint: {
+          'line-color': 'rgba(56,189,248,0.4)',
+          'line-width': 6,
+          'line-blur': 2
+        },
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        }
+      });
+      map.addLayer({
         id: 'ukraine-border',
         type: 'line',
         source: 'ukraine-border',
@@ -115,15 +120,17 @@ export default function MapView({
           'line-color': '#38bdf8',
           'line-width': 2.5,
           'line-opacity': 0.9
+        },
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
         }
       });
 
       map.addSource('places', {
         type: 'geojson',
         data: toGeoJson(places),
-        cluster: true,
-        clusterMaxZoom: 8,
-        clusterRadius: 40
+        cluster: false
       });
 
       map.addLayer({
@@ -150,37 +157,17 @@ export default function MapView({
       });
 
       map.addLayer({
-        id: 'clusters',
+        id: 'oblast-centers',
         type: 'circle',
         source: 'places',
-        filter: ['has', 'point_count'],
+        filter: ['==', ['get', 'category'], 'oblast-center'],
+        maxzoom: 7,
         paint: {
-          'circle-color': 'rgba(34,197,94,0.9)',
-          'circle-radius': [
-            'step',
-            ['get', 'point_count'],
-            16,
-            10,
-            22,
-            30,
-            30
-          ],
-          'circle-opacity': 0.85
-        }
-      });
-
-      map.addLayer({
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'places',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': '{point_count_abbreviated}',
-          'text-font': ['Open Sans Bold'],
-          'text-size': 12
-        },
-        paint: {
-          'text-color': '#0b0f16'
+          'circle-color': '#f97316',
+          'circle-radius': 10,
+          'circle-opacity': 0.95,
+          'circle-stroke-color': '#0f172a',
+          'circle-stroke-width': 2
         }
       });
 
@@ -188,7 +175,8 @@ export default function MapView({
         id: 'points',
         type: 'circle',
         source: 'places',
-        filter: ['!', ['has', 'point_count']],
+        filter: ['!=', ['get', 'category'], 'oblast-center'],
+        minzoom: 7,
         paint: {
           'circle-color': ['coalesce', ['get', 'color'], '#38bdf8'],
           'circle-radius': 6,
@@ -252,7 +240,18 @@ export default function MapView({
       }
     });
 
-    map.on('mouseenter', 'points', (event) => {
+    map.on('click', 'oblast-centers', (event) => {
+      event.preventDefault();
+      event.originalEvent?.stopPropagation?.();
+      const feature = event.features?.[0];
+      if (!feature) return;
+      const id = feature.properties?.id;
+      if (id) {
+        onOblastCenterClickRef.current?.(id);
+      }
+    });
+
+    const showPopup = (event) => {
       map.getCanvas().style.cursor = 'pointer';
       const feature = event.features?.[0];
       if (!feature) return;
@@ -267,11 +266,17 @@ export default function MapView({
         });
       }
       hoverPopupRef.current.setLngLat(event.lngLat).setHTML(html).addTo(map);
-    });
-    map.on('mouseleave', 'points', () => {
+    };
+
+    const hidePopup = () => {
       map.getCanvas().style.cursor = '';
       hoverPopupRef.current?.remove();
-    });
+    };
+
+    map.on('mouseenter', 'points', showPopup);
+    map.on('mouseleave', 'points', hidePopup);
+    map.on('mouseenter', 'oblast-centers', showPopup);
+    map.on('mouseleave', 'oblast-centers', hidePopup);
 
     return () => {
       map.remove();

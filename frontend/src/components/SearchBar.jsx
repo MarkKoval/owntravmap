@@ -3,8 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { debounce } from '../utils/throttle.js';
 import { isInUkraine } from '../utils/geo.js';
 import { motionTokens } from '../utils/motion.js';
-
-const PHOTON_URL = 'https://photon.komoot.io/api/';
+import { searchPlaces } from '../utils/api.js';
 
 export default function SearchBar({ onSelect, ukraineFeature, reduceMotion }) {
   const [query, setQuery] = useState('');
@@ -16,18 +15,13 @@ export default function SearchBar({ onSelect, ukraineFeature, reduceMotion }) {
       setResults([]);
       return;
     }
-    const url = new URL(PHOTON_URL);
-    url.searchParams.set('q', value);
-    url.searchParams.set('limit', '6');
-    url.searchParams.set('lang', 'uk');
-    url.searchParams.set('bbox', '22.1,44.3,41.9,52.5');
-
+    const trimmed = value.trim();
+    if (trimmed.length < 3) {
+      setResults([]);
+      return;
+    }
     try {
-      const response = await fetch(url.toString());
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-      const data = await response.json();
+      const data = await searchPlaces(trimmed);
       const mapped = data.features
         .map((feature) => ({
           id: feature.properties.osm_id || feature.properties.place_id,
@@ -42,7 +36,7 @@ export default function SearchBar({ onSelect, ukraineFeature, reduceMotion }) {
           if (item.countryCode?.toUpperCase() === 'UA') return true;
           if (item.country?.toLowerCase?.() === 'ukraine') return true;
           if (item.country?.toLowerCase?.() === 'україна') return true;
-          if (!ukraineFeature) return false;
+          if (!ukraineFeature) return true;
           return isInUkraine(ukraineFeature, item.lng, item.lat);
         });
       setResults(mapped);

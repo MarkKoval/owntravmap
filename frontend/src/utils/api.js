@@ -47,3 +47,12 @@ export async function updatePlace(id, payload) {
   }
   return response.json();
 }
+
+export async function searchPlaces(query) {
+  const params = new URLSearchParams({ q: query });
+  const response = await fetch(`${API_BASE}/api/search?${params}`);
+  if (!response.ok) {
+    throw new Error('Search failed');
+  }
+  return response.json();
+}

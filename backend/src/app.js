@@ -28,8 +28,30 @@ export function createApp() {
     res.json(filtered);
   });
 
+  app.get('/api/search', async (req, res) => {
+    const query = req.query.q;
+    if (!query) {
+      return res.json({ features: [] });
+    }
+    const url = new URL('https://photon.komoot.io/api/');
+    url.searchParams.set('q', query);
+    url.searchParams.set('limit', '6');
+    url.searchParams.set('lang', 'uk');
+    url.searchParams.set('bbox', '22.1,44.3,41.9,52.5');
+    try {
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        return res.status(502).json({ message: 'Search failed' });
+      }
+      const data = await response.json();
+      return res.json(data);
+    } catch (error) {
+      return res.status(502).json({ message: 'Search failed' });
+    }
+  });
+
   app.post('/api/places', async (req, res) => {
-    const { lat, lng, title, note, source, visitDate, color } = req.body;
+    const { lat, lng, title, note, source, visitDate, color, category, photos } = req.body;
     if (lat === undefined || lng === undefined) {
       return res.status(400).json({ message: 'lat and lng are required' });
     }
@@ -48,6 +70,8 @@ export function createApp() {
       title: title || '',
       note: note || '',
       color: color || '#38bdf8',
+      category: category || 'regular',
+      photos: Array.isArray(photos) ? photos : [],
       source: source === 'search' ? 'search' : 'click'
     };
     places.push(newPlace);
@@ -56,7 +80,7 @@ export function createApp() {
   });
 
   app.put('/api/places/:id', async (req, res) => {
-    const { title, note, visitDate, color } = req.body;
+    const { title, note, visitDate, color, category, photos } = req.body;
     const places = await readPlaces();
     const target = places.find((place) => place.id === req.params.id);
     if (!target) {
@@ -66,6 +90,8 @@ export function createApp() {
     target.note = note ?? target.note;
     target.visitDate = visitDate || target.visitDate || new Date().toISOString().slice(0, 10);
     target.color = color || target.color || '#38bdf8';
+    target.category = category || target.category || 'regular';
+    target.photos = Array.isArray(photos) ? photos : target.photos || [];
     await writePlaces(places);
     res.json(target);
   });

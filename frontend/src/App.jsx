@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import MapView from './components/MapView.jsx';
 import SearchBar from './components/SearchBar.jsx';
 import BottomSheet from './components/BottomSheet.jsx';
+import PhotoSphereModal from './components/PhotoSphereModal.jsx';
 import Timeline from './components/Timeline.jsx';
 import DateFilter from './components/DateFilter.jsx';
 import MotionToggle from './components/MotionToggle.jsx';
@@ -15,6 +16,7 @@ export default function App() {
   const [places, setPlaces] = useState([]);
   const [tempPlace, setTempPlace] = useState(null);
   const [editingPlace, setEditingPlace] = useState(null);
+  const [galleryPlace, setGalleryPlace] = useState(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
   const heatRadius = 48;
   const heatIntensity = 1.1;
@@ -66,7 +68,9 @@ export default function App() {
         note: '',
         source: 'click',
         visitDate: new Date().toISOString().split('T')[0],
-        color: '#38bdf8'
+        color: '#38bdf8',
+        category: 'regular',
+        photos: []
       });
       setEditingPlace(null);
     },
@@ -97,7 +101,9 @@ export default function App() {
       note: '',
       source: 'search',
       visitDate: new Date().toISOString().split('T')[0],
-      color: '#38bdf8'
+      color: '#38bdf8',
+      category: 'regular',
+      photos: []
     };
     setTempPlace(next);
     setEditingPlace(null);
@@ -120,6 +126,12 @@ export default function App() {
     setTempPlace(null);
   };
 
+  const handleOblastCenterClick = (placeId) => {
+    const target = places.find((place) => place.id === placeId);
+    if (!target) return;
+    setGalleryPlace(target);
+  };
+
   return (
     <div className="app">
       <MapView
@@ -130,6 +142,7 @@ export default function App() {
         heatIntensity={heatIntensity}
         onMapReady={onMapReady}
         onSelectPlace={setSelectedPlaceId}
+        onOblastCenterClick={handleOblastCenterClick}
         selectedPlaceId={selectedPlaceId}
         reduceMotion={reduceMotion}
       />
@@ -171,6 +184,8 @@ export default function App() {
         onConfirm={handleConfirm}
         reduceMotion={reduceMotion}
       />
+
+      <PhotoSphereModal place={galleryPlace} onClose={() => setGalleryPlace(null)} />
 
       <AnimatePresence>
         {errorMessage && (

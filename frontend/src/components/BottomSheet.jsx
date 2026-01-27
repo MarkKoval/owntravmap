@@ -3,9 +3,20 @@ import { motionTokens } from '../utils/motion.js';
 import { useEffect, useState } from 'react';
 
 const DEFAULT_COLOR = '#38bdf8';
+const CATEGORY_OPTIONS = [
+  { value: 'regular', label: 'Звичайна мітка' },
+  { value: 'oblast-center', label: 'Обласний центр' }
+];
 
 export default function BottomSheet({ place, mode = 'create', onCancel, onConfirm, reduceMotion }) {
-  const [form, setForm] = useState({ title: '', note: '', visitDate: '', color: DEFAULT_COLOR });
+  const [form, setForm] = useState({
+    title: '',
+    note: '',
+    visitDate: '',
+    color: DEFAULT_COLOR,
+    category: 'regular',
+    photos: ''
+  });
 
   useEffect(() => {
     if (place) {
@@ -14,7 +25,9 @@ export default function BottomSheet({ place, mode = 'create', onCancel, onConfir
         title: place.title || '',
         note: place.note || '',
         visitDate: place.visitDate || createdFallback || new Date().toISOString().split('T')[0],
-        color: place.color || DEFAULT_COLOR
+        color: place.color || DEFAULT_COLOR,
+        category: place.category || 'regular',
+        photos: Array.isArray(place.photos) ? place.photos.join(', ') : ''
       });
     }
   }, [place]);
@@ -67,6 +80,20 @@ export default function BottomSheet({ place, mode = 'create', onCancel, onConfir
           Колір мітки
           <input type="color" name="color" value={form.color} onChange={handleChange} />
         </label>
+        <label>
+          Категорія
+          <select name="category" value={form.category} onChange={handleChange}>
+            {CATEGORY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Фото (URL через кому)
+          <textarea name="photos" value={form.photos} onChange={handleChange} />
+        </label>
         <div className="sheet-actions">
           <button className="ghost" type="button" onClick={onCancel}>
             Скасувати
@@ -81,6 +108,11 @@ export default function BottomSheet({ place, mode = 'create', onCancel, onConfir
                 note: form.note,
                 visitDate: form.visitDate,
                 color: form.color,
+                category: form.category,
+                photos: form.photos
+                  .split(',')
+                  .map((entry) => entry.trim())
+                  .filter(Boolean),
                 lat: place.lat,
                 lng: place.lng,
                 source: place.source
