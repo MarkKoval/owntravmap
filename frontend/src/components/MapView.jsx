@@ -4,7 +4,7 @@ import { motionTokens } from '../utils/motion.js';
 import { buildUkraineMask, getBounds, loadUkraineGeojson, toGeoJson } from '../utils/geo.js';
 
 const SATELLITE_URL = 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-const LABELS_URL = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_labels/{z}/{x}/{y}.png';
+const LABELS_URL = 'https://basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png';
 
 export default function MapView({
   places,
@@ -53,7 +53,7 @@ export default function MapView({
             type: 'raster',
             tiles: [LABELS_URL],
             tileSize: 256,
-            attribution: '© OpenStreetMap contributors, © Stadia Maps'
+            attribution: '© OpenStreetMap contributors, © CARTO'
           }
         },
         layers: [
