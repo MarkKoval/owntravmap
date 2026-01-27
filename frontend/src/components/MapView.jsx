@@ -42,6 +42,7 @@ export default function MapView({
       container: mapContainer.current,
       style: {
         version: 8,
+        glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
         sources: {
           satellite: {
             type: 'raster',
@@ -269,7 +270,7 @@ export default function MapView({
   };
 
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded) return;
+    if (!mapRef.current || !mapLoaded || !mapRef.current.isStyleLoaded?.()) return;
     const source = mapRef.current.getSource('places');
     if (source) {
       source.setData(toGeoJson(places));
@@ -277,7 +278,7 @@ export default function MapView({
   }, [places, mapLoaded]);
 
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded) return;
+    if (!mapRef.current || !mapLoaded || !mapRef.current.isStyleLoaded?.()) return;
     const source = mapRef.current.getSource('temp-place');
     if (source) {
       const data = tempPlace
@@ -300,13 +301,13 @@ export default function MapView({
   }, [tempPlace, mapLoaded]);
 
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded) return;
+    if (!mapRef.current || !mapLoaded || !mapRef.current.isStyleLoaded?.()) return;
     mapRef.current.setPaintProperty('heatmap', 'heatmap-radius', heatRadius);
     mapRef.current.setPaintProperty('heatmap', 'heatmap-intensity', heatIntensity);
   }, [heatRadius, heatIntensity, mapLoaded]);
 
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded) return;
+    if (!mapRef.current || !mapLoaded || !mapRef.current.isStyleLoaded?.()) return;
     const source = mapRef.current.getSource('selected-place');
     if (source) {
       const target = places.find((place) => place.id === selectedPlaceId);
