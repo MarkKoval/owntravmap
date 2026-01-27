@@ -94,39 +94,6 @@ export default function MapView({
         [bounds[1][0] + 2, bounds[1][1] + 2]
       ]);
 
-      map.addSource('ukraine-border', {
-        type: 'geojson',
-        data: ukraineFeature
-      });
-      map.addLayer({
-        id: 'ukraine-border-glow',
-        type: 'line',
-        source: 'ukraine-border',
-        paint: {
-          'line-color': 'rgba(56,189,248,0.4)',
-          'line-width': 6,
-          'line-blur': 2
-        },
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        }
-      });
-      map.addLayer({
-        id: 'ukraine-border',
-        type: 'line',
-        source: 'ukraine-border',
-        paint: {
-          'line-color': '#38bdf8',
-          'line-width': 2.5,
-          'line-opacity': 0.9
-        },
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        }
-      });
-
       map.addSource('places', {
         type: 'geojson',
         data: toGeoJson(places),
