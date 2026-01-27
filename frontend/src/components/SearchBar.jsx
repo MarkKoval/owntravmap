@@ -19,7 +19,7 @@ export default function SearchBar({ onSelect, ukraineFeature, reduceMotion }) {
     const url = new URL(PHOTON_URL);
     url.searchParams.set('q', value);
     url.searchParams.set('limit', '6');
-    url.searchParams.set('lang', 'en');
+    url.searchParams.set('lang', 'uk');
     url.searchParams.set('bbox', '22.1,44.3,41.9,52.5');
 
     const response = await fetch(url.toString());
@@ -77,7 +77,7 @@ export default function SearchBar({ onSelect, ukraineFeature, reduceMotion }) {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Search Ukrainian places"
+        placeholder="Пошук місць в Україні"
         aria-label="Search"
       />
       <AnimatePresence>
