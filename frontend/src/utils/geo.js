@@ -18,7 +18,7 @@ export function buildUkraineMask(ukraineFeature) {
       [-180, -85]
     ]
   ];
-  const hole = ukraineFeature.geometry.coordinates[0];
+  const hole = [...ukraineFeature.geometry.coordinates[0]].reverse();
   return {
     type: 'FeatureCollection',
     features: [
