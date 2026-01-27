@@ -34,3 +34,16 @@ export async function deletePlace(id) {
   }
   return response.json();
 }
+
+export async function updatePlace(id, payload) {
+  const response = await fetch(`${API_BASE}/api/places/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to update place');
+  }
+  return response.json();
+}

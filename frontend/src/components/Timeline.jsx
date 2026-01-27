@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import { groupPlacesByDay, formatDayLabel } from '../utils/date.js';
+import { groupPlacesByDay, formatDayLabel, formatVisitDate } from '../utils/date.js';
 
-export default function Timeline({ places, onSelect, selectedPlaceId }) {
+export default function Timeline({ places, onSelect, onEdit, selectedPlaceId }) {
   const rows = useMemo(() => {
     const grouped = groupPlacesByDay(places);
     const sortedDays = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
@@ -19,7 +19,7 @@ export default function Timeline({ places, onSelect, selectedPlaceId }) {
   return (
     <div className="timeline">
       <h3>Timeline</h3>
-      <List height={360} itemCount={rows.length} itemSize={56} width="100%">
+      <List height={360} itemCount={rows.length} itemSize={72} width="100%">
         {({ index, style }) => {
           const item = rows[index];
           if (item.type === 'header') {
@@ -31,18 +31,27 @@ export default function Timeline({ places, onSelect, selectedPlaceId }) {
           }
           const place = item.place;
           return (
-            <button
-              type="button"
-              className={`timeline-item ${place.id === selectedPlaceId ? 'active' : ''}`}
-              style={style}
-              onClick={() => onSelect?.(place.id)}
-            >
-              <div>
-                <strong>{place.title || 'Untitled place'}</strong>
-                <span>{new Date(place.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              </div>
-              {place.note && <p>{place.note}</p>}
-            </button>
+            <div className="timeline-row" style={style}>
+              <button
+                type="button"
+                className={`timeline-item ${place.id === selectedPlaceId ? 'active' : ''}`}
+                onClick={() => onSelect?.(place.id)}
+              >
+                <div>
+                  <strong>{place.title || 'Без назви'}</strong>
+                  <span>{formatVisitDate(place.visitDate, place.createdAt)}</span>
+                </div>
+                {place.note && <p>{place.note}</p>}
+              </button>
+              <button
+                type="button"
+                className="timeline-edit"
+                onClick={() => onEdit?.(place)}
+                aria-label={`Редагувати ${place.title || 'місце'}`}
+              >
+                Редагувати
+              </button>
+            </div>
           );
         }}
       </List>

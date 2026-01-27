@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import { motionTokens } from '../utils/motion.js';
 import { getBounds, loadUkraineGeojson, toGeoJson } from '../utils/geo.js';
+import { formatVisitDate } from '../utils/date.js';
 
 const SATELLITE_URL = 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-const LABELS_URL = 'https://basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png';
+const LABELS_URL = 'https://basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png';
 
 export default function MapView({
   places,
@@ -26,6 +27,7 @@ export default function MapView({
   const onSelectPlaceRef = useRef(onSelectPlace);
   const onMapReadyRef = useRef(onMapReady);
   const reduceMotionRef = useRef(reduceMotion);
+  const hoverPopupRef = useRef(null);
 
   useEffect(() => {
     onMapClickRef.current = onMapClick;
@@ -101,6 +103,21 @@ export default function MapView({
         [bounds[1][0] + 2, bounds[1][1] + 2]
       ]);
 
+      map.addSource('ukraine-border', {
+        type: 'geojson',
+        data: ukraineFeature
+      });
+      map.addLayer({
+        id: 'ukraine-border',
+        type: 'line',
+        source: 'ukraine-border',
+        paint: {
+          'line-color': '#38bdf8',
+          'line-width': 2.5,
+          'line-opacity': 0.9
+        }
+      });
+
       map.addSource('places', {
         type: 'geojson',
         data: toGeoJson(places),
@@ -173,7 +190,7 @@ export default function MapView({
         source: 'places',
         filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-color': '#38bdf8',
+          'circle-color': ['coalesce', ['get', 'color'], '#38bdf8'],
           'circle-radius': 6,
           'circle-opacity': 0.9,
           'circle-stroke-color': '#0f172a',
@@ -190,7 +207,7 @@ export default function MapView({
         type: 'circle',
         source: 'temp-place',
         paint: {
-          'circle-color': '#f97316',
+          'circle-color': ['coalesce', ['get', 'color'], '#f97316'],
           'circle-radius': 10,
           'circle-opacity': 0.95,
           'circle-stroke-color': '#fff7ed',
@@ -209,7 +226,7 @@ export default function MapView({
         paint: {
           'circle-color': 'rgba(56,189,248,0.1)',
           'circle-radius': 18,
-          'circle-stroke-color': '#38bdf8',
+          'circle-stroke-color': ['coalesce', ['get', 'color'], '#38bdf8'],
           'circle-stroke-width': 2,
           'circle-opacity': 0.8
         }
@@ -225,6 +242,8 @@ export default function MapView({
     });
 
     map.on('click', 'points', (event) => {
+      event.preventDefault();
+      event.originalEvent?.stopPropagation?.();
       const feature = event.features?.[0];
       if (!feature) return;
       const id = feature.properties?.id;
@@ -233,11 +252,25 @@ export default function MapView({
       }
     });
 
-    map.on('mouseenter', 'points', () => {
+    map.on('mouseenter', 'points', (event) => {
       map.getCanvas().style.cursor = 'pointer';
+      const feature = event.features?.[0];
+      if (!feature) return;
+      const title = feature.properties?.title || 'Без назви';
+      const dateLabel = formatVisitDate(feature.properties?.visitDate, feature.properties?.createdAt);
+      const html = `<div class="map-tooltip"><strong>${title}</strong><div>${dateLabel}</div></div>`;
+      if (!hoverPopupRef.current) {
+        hoverPopupRef.current = new maplibregl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 10
+        });
+      }
+      hoverPopupRef.current.setLngLat(event.lngLat).setHTML(html).addTo(map);
     });
     map.on('mouseleave', 'points', () => {
       map.getCanvas().style.cursor = '';
+      hoverPopupRef.current?.remove();
     });
 
     return () => {
@@ -286,7 +319,7 @@ export default function MapView({
             features: [
               {
                 type: 'Feature',
-                properties: {},
+                properties: { color: tempPlace.color },
                 geometry: {
                   type: 'Point',
                   coordinates: [tempPlace.lng, tempPlace.lat]
@@ -316,7 +349,7 @@ export default function MapView({
             features: [
               {
                 type: 'Feature',
-                properties: {},
+                properties: { color: target.color },
                 geometry: {
                   type: 'Point',
                   coordinates: [target.lng, target.lat]

@@ -27,7 +27,14 @@ export function toGeoJson(points) {
     type: 'FeatureCollection',
     features: points.map((place) => ({
       type: 'Feature',
-      properties: { id: place.id, title: place.title, count: 1 },
+      properties: {
+        id: place.id,
+        title: place.title,
+        count: 1,
+        color: place.color,
+        visitDate: place.visitDate,
+        createdAt: place.createdAt
+      },
       geometry: {
         type: 'Point',
         coordinates: [place.lng, place.lat]

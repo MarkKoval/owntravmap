@@ -13,8 +13,8 @@ describe('BottomSheet', () => {
         reduceMotion={true}
       />
     );
-    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Kyiv' } });
-    fireEvent.click(screen.getByText('Confirm visited'));
+    fireEvent.change(screen.getByLabelText('Назва'), { target: { value: 'Kyiv' } });
+    fireEvent.click(screen.getByText('Підтвердити'));
     expect(onConfirm).toHaveBeenCalled();
     expect(onConfirm.mock.calls[0][0].title).toBe('Kyiv');
   });
