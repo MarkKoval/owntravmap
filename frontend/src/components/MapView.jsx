@@ -20,6 +20,7 @@ export default function MapView({
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const [ukraineFeature, setUkraineFeature] = useState(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const cameraQueue = useRef(Promise.resolve());
 
   useEffect(() => {
@@ -217,6 +218,7 @@ export default function MapView({
       });
 
       onMapReady?.(map, queueFlyTo);
+      setMapLoaded(true);
     });
 
     map.on('click', (event) => {
@@ -241,6 +243,7 @@ export default function MapView({
 
     return () => {
       map.remove();
+      setMapLoaded(false);
     };
   }, [ukraineFeature, onMapClick, onMapReady, onSelectPlace, places, heatRadius, heatIntensity, reduceMotion]);
 
@@ -266,15 +269,15 @@ export default function MapView({
   };
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !mapLoaded) return;
     const source = mapRef.current.getSource('places');
     if (source) {
       source.setData(toGeoJson(places));
     }
-  }, [places]);
+  }, [places, mapLoaded]);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !mapLoaded) return;
     const source = mapRef.current.getSource('temp-place');
     if (source) {
       const data = tempPlace
@@ -294,16 +297,16 @@ export default function MapView({
         : { type: 'FeatureCollection', features: [] };
       source.setData(data);
     }
-  }, [tempPlace]);
+  }, [tempPlace, mapLoaded]);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !mapLoaded) return;
     mapRef.current.setPaintProperty('heatmap', 'heatmap-radius', heatRadius);
     mapRef.current.setPaintProperty('heatmap', 'heatmap-intensity', heatIntensity);
-  }, [heatRadius, heatIntensity]);
+  }, [heatRadius, heatIntensity, mapLoaded]);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !mapLoaded) return;
     const source = mapRef.current.getSource('selected-place');
     if (source) {
       const target = places.find((place) => place.id === selectedPlaceId);
@@ -324,7 +327,7 @@ export default function MapView({
         : { type: 'FeatureCollection', features: [] };
       source.setData(data);
     }
-  }, [selectedPlaceId, places]);
+  }, [selectedPlaceId, places, mapLoaded]);
 
   return <div className="map" ref={mapContainer} data-testid="map" />;
 }
