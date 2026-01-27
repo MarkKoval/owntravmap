@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import { motionTokens } from '../utils/motion.js';
-import { buildUkraineMask, getBounds, loadUkraineGeojson, toGeoJson } from '../utils/geo.js';
+import { getBounds, loadUkraineGeojson, toGeoJson } from '../utils/geo.js';
 
 const SATELLITE_URL = 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const LABELS_URL = 'https://basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png';
@@ -100,20 +100,6 @@ export default function MapView({
         [bounds[0][0] - 2, bounds[0][1] - 2],
         [bounds[1][0] + 2, bounds[1][1] + 2]
       ]);
-
-      map.addSource('mask', {
-        type: 'geojson',
-        data: buildUkraineMask(ukraineFeature)
-      });
-      map.addLayer({
-        id: 'ukraine-mask',
-        type: 'fill',
-        source: 'mask',
-        paint: {
-          'fill-color': '#0b0f16',
-          'fill-opacity': 0.72
-        }
-      });
 
       map.addSource('places', {
         type: 'geojson',
@@ -234,6 +220,7 @@ export default function MapView({
     });
 
     map.on('click', (event) => {
+      if (!isPrimaryMapInteraction(event)) return;
       onMapClickRef.current?.(event.lngLat);
     });
 
@@ -348,4 +335,20 @@ export default function MapView({
 function cubicBezier(p0, p1, p2, p3, t) {
   const u = 1 - t;
   return 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t;
+}
+
+function isPrimaryMapInteraction(event) {
+  const original = event.originalEvent;
+  if (!original) return true;
+  if (typeof TouchEvent !== 'undefined' && original instanceof TouchEvent) return true;
+  if (typeof PointerEvent !== 'undefined' && original instanceof PointerEvent) {
+    return original.button === 0 || original.pointerType === 'touch';
+  }
+  if (typeof MouseEvent !== 'undefined' && original instanceof MouseEvent) {
+    return original.button === 0;
+  }
+  if (typeof original.button === 'number') {
+    return original.button === 0;
+  }
+  return true;
 }
