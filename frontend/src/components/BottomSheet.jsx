@@ -2,12 +2,33 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { motionTokens } from '../utils/motion.js';
 import { useEffect, useState } from 'react';
 
-export default function BottomSheet({ place, onCancel, onConfirm, reduceMotion }) {
-  const [form, setForm] = useState({ title: '', note: '' });
+const DEFAULT_COLOR = '#38bdf8';
+const CATEGORY_OPTIONS = [
+  { value: 'regular', label: 'Звичайна мітка' },
+  { value: 'oblast-center', label: 'Обласний центр' }
+];
+
+export default function BottomSheet({ place, mode = 'create', onCancel, onConfirm, reduceMotion }) {
+  const [form, setForm] = useState({
+    title: '',
+    note: '',
+    visitDate: '',
+    color: DEFAULT_COLOR,
+    category: 'regular',
+    photos: ''
+  });
 
   useEffect(() => {
     if (place) {
-      setForm({ title: place.title || '', note: place.note || '' });
+      const createdFallback = place.createdAt ? place.createdAt.split('T')[0] : '';
+      setForm({
+        title: place.title || '',
+        note: place.note || '',
+        visitDate: place.visitDate || createdFallback || new Date().toISOString().split('T')[0],
+        color: place.color || DEFAULT_COLOR,
+        category: place.category || 'regular',
+        photos: Array.isArray(place.photos) ? place.photos.join(', ') : ''
+      });
     }
   }, [place]);
 
@@ -39,21 +60,43 @@ export default function BottomSheet({ place, onCancel, onConfirm, reduceMotion }
         aria-modal="true"
       >
         <div className="sheet-handle" />
-        <h2>Confirm visit</h2>
+        <h2>{mode === 'edit' ? 'Редагувати мітку' : 'Додати відвідування'}</h2>
         <p>
           {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
         </p>
         <label>
-          Title
+          Назва
           <input name="title" value={form.title} onChange={handleChange} />
         </label>
         <label>
-          Note
+          Дата відвідування
+          <input type="date" name="visitDate" value={form.visitDate} onChange={handleChange} />
+        </label>
+        <label>
+          Опис
           <textarea name="note" value={form.note} onChange={handleChange} />
+        </label>
+        <label>
+          Колір мітки
+          <input type="color" name="color" value={form.color} onChange={handleChange} />
+        </label>
+        <label>
+          Категорія
+          <select name="category" value={form.category} onChange={handleChange}>
+            {CATEGORY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Фото (URL через кому)
+          <textarea name="photos" value={form.photos} onChange={handleChange} />
         </label>
         <div className="sheet-actions">
           <button className="ghost" type="button" onClick={onCancel}>
-            Cancel
+            Скасувати
           </button>
           <button
             className="primary"
@@ -63,13 +106,20 @@ export default function BottomSheet({ place, onCancel, onConfirm, reduceMotion }
                 ...place,
                 title: form.title,
                 note: form.note,
+                visitDate: form.visitDate,
+                color: form.color,
+                category: form.category,
+                photos: form.photos
+                  .split(',')
+                  .map((entry) => entry.trim())
+                  .filter(Boolean),
                 lat: place.lat,
                 lng: place.lng,
                 source: place.source
               })
             }
           >
-            Confirm visited
+            {mode === 'edit' ? 'Зберегти' : 'Підтвердити'}
           </button>
         </div>
       </motion.div>
