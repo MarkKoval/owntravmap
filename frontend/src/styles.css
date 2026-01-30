@@ -1,0 +1,225 @@
+:root {
+  color-scheme: dark;
+  font-family: "SF Pro Display", "Inter", system-ui, sans-serif;
+  background: #0b0d13;
+  color: #f5f7ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0b0d13;
+}
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: rgba(22, 24, 35, 0.8);
+  backdrop-filter: blur(22px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brand {
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.action-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: inherit;
+  padding: 10px 16px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.map-shell {
+  position: relative;
+  flex: 1;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.panel {
+  position: absolute;
+  top: 80px;
+  right: 24px;
+  width: 320px;
+  background: rgba(20, 22, 30, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 16px;
+  backdrop-filter: blur(30px);
+  pointer-events: auto;
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.panel.open {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.panel-content {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #aeb7ff;
+  cursor: pointer;
+}
+
+.timeline-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.timeline-item {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stat {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 12px;
+  border-radius: 16px;
+}
+
+.bottom-sheet {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%) translateY(120%);
+  width: min(420px, 92vw);
+  background: rgba(18, 20, 30, 0.85);
+  border-radius: 24px;
+  padding: 16px 20px 24px;
+  backdrop-filter: blur(26px);
+  transition: transform 0.3s ease;
+  pointer-events: auto;
+}
+
+.bottom-sheet.open {
+  transform: translateX(-50%) translateY(0);
+}
+
+.sheet-handle {
+  width: 48px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 auto 12px;
+}
+
+.sheet-form {
+  display: grid;
+  gap: 10px;
+}
+
+.sheet-form input,
+.sheet-form textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: none;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+}
+
+.sheet-form button {
+  border: none;
+  border-radius: 14px;
+  padding: 12px;
+  background: linear-gradient(120deg, #4776ff, #b44dff);
+  color: white;
+  cursor: pointer;
+}
+
+.photo-sphere {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.photo-sphere.open {
+  display: flex;
+}
+
+.photo-sphere__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 5, 12, 0.82);
+  backdrop-filter: blur(12px);
+}
+
+.photo-sphere__content {
+  position: relative;
+  width: min(700px, 92vw);
+  height: min(500px, 70vh);
+  background: rgba(17, 19, 30, 0.9);
+  border-radius: 28px;
+  padding: 16px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.photo-sphere__canvas {
+  flex: 1;
+  border-radius: 20px;
+  overflow: hidden;
+}
